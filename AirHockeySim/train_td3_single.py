@@ -75,7 +75,8 @@ if __name__ == "__main__":
         print('episode ' + str(i) + '/' + str(n_games) +' score %.2f' % score1, 'average score %.3f' % avg_score) 
         if (i+1)%100 == 0 and i != 0:
 
-            agent.save_models()
+            agent1.save_models()
+
             with open('.\\data.csv', 'r') as r:
                 lines = r.readlines()
             avg_scores = [float(line.split(',')[2]) for line in lines][-200:]
@@ -84,7 +85,7 @@ if __name__ == "__main__":
             plt.xlabel("Episode")
             plt.legend()
             time = datetime.now()
-            file_name = ".\\Plots\\Model_"+time.strftime("%d%m%Y")+"_"+str(i+1)+"_"+str(score).split('.')[0]+".png"
+            file_name = ".\\Plots\\Model_"+time.strftime("%d%m%Y")+"_"+str(i+1)+"_"+str(score1).split('.')[0]+".png"
             plt.savefig(file_name, bbox_inches='tight')
             #plt.show(block=False)
             #plt.pause(5)
