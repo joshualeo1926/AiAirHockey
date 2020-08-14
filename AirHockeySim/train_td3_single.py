@@ -11,7 +11,7 @@ from DDDQNAgent import TDAgent
 
 if __name__ == "__main__":
     env = AirHockeyEnvironment()
-    n_games = 10000
+    n_games = 20000
     load_checkpoint = True
 
     agent1 = TDAgent(alpha=5e-5, beta=5e-5, input_dims=[8], tau=0.005, max_action=1.0, 
@@ -38,6 +38,7 @@ if __name__ == "__main__":
         while not done:
             action1 = agent1.choose_actions(state1)
             action2 = random.randint(0, 24)
+            #print(env.paddle1.x_vel, env.paddle1.y_vel, action1)
             new_state1, new_state2, reward1, reward2, done = env.step(action1, action2, render=True)
             new_state1 = np.array(new_state1)
             new_state2 = np.array(new_state2)

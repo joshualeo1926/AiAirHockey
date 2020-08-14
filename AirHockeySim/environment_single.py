@@ -14,6 +14,7 @@ class field():
         self.width = width
         self.height = height
         self.goal_width = goal_width
+        self.p1_lim = 360
         self.goal_y1 = int(self.height/2 - self.goal_width/2)
         self.goal_y2 = int(self.height/2 + self.goal_width/2)
 
@@ -25,6 +26,7 @@ class field():
             background[self.goal_y1+i][self.width-5:self.width-1] = (0, 0, 0)
         for i in range(self.height):
             background[i][self.width//2] = (0, 0, 0)
+            background[i][self.p1_lim] = (0, 0, 155)
         image = Image.fromarray(background, "RGB")
         
         return image
@@ -45,6 +47,7 @@ class paddle():
         self.angle = 0
         self.x_vel = 0
         self.y_vel = 0
+        self.p1_lim = 360
 
         self.max_vel = 125
         self.max_accel = 500#150#125#100
@@ -63,8 +66,8 @@ class paddle():
         if self.x - self.radius <= 0:
             self.x = self.radius
             return True
-        elif self.x + self.radius > int(width / 2):
-            self.x = int(width / 2) - self.radius
+        elif self.x + self.radius > int(self.p1_lim):
+            self.x = int(self.p1_lim) - self.radius
             return True
         return False
 
@@ -284,7 +287,7 @@ class AirHockeyEnvironment():
         self.n_time_step = 0
 
         self.puck_strike_reward = 5
-        self.paddel_vel_reward = 50
+        self.paddel_vel_reward = 75
         self.accuracy_reward = 100
         self.decay_rate = 0.01
         self.time_step_penalty = 1
@@ -462,7 +465,7 @@ class AirHockeyEnvironment():
     
     def reset(self):
         self.n_time_step = 0
-        self.puck.reset(random.randint(self.puck.max_speed/6, self.puck.max_speed), 1)
+        self.puck.reset(random.randint(self.puck.max_speed//12, self.puck.max_speed), 1) #(self.puck.max_speed/6, self.puck.max_speed), 1
         self.paddle1.reset()
         self.paddle2.reset()
 
@@ -634,7 +637,7 @@ class AirHockeyEnvironment():
             elif self.puck.x < self.env.width - self.env.width/8 and self.puck.x >= self.env.width/2:
                 vel_2_multiplier = ((self.puck.x+self.env.width/4)/(self.env.width+self.env.width/4))*1.5
 
-        vel_2_multiplier = 1 ##
+        #vel_2_multiplier = 1 ##
 
         vel_2_reward = (self.paddel_vel_reward * (paddle.velocity/(self.puck.max_speed/4))**2)*vel_2_multiplier
 
@@ -656,8 +659,8 @@ class AirHockeyEnvironment():
             return self.get_state(0, 0, True)
 
         if self.n_time_step >= self.time_step_lim:
-            return self.get_state(-self.time_step_lim, -self.time_step_lim, True)
-
+            return self.get_state(-1, -1, True) #-self.time_step_lim -self.time_step_lim
+ 
         self.n_time_step += 1
         np_field = np.array(self.field)
 
@@ -665,9 +668,9 @@ class AirHockeyEnvironment():
         
         self.paddle1.acl_move(action1, self.dt) 
         if self.paddle1.check_vertical_bounds(self.env.height):
-            return self.get_state(-self.time_step_lim, 0, True)
+            return self.get_state(-200, 0, True)
         if self.paddle1.check_left_boundary(self.env.width):
-            return self.get_state(-self.time_step_lim, 0, True)
+            return self.get_state(-200, 0, True)
 
         self.paddle_control()
         #self.paddle2.action(action2, self.dt)
@@ -685,7 +688,7 @@ class AirHockeyEnvironment():
         
         if paddle1_bool:
             reward = self.calulate_reward(self.paddle1)
-            return self.get_state(reward, 0, True)
+            return self.get_state(reward, 0, False)
 
         #if paddle2_bool:
         #    reward = self.calulate_reward(self.paddle2)
