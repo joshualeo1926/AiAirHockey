@@ -49,8 +49,8 @@ class paddle():
         self.y_vel = 0
         self.p1_lim = 360
 
-        self.max_vel = 125
-        self.max_accel = 500#150#125#100
+        self.max_vel = 450#125
+        self.max_accel = 1000#500#150#125#100
         self.accel_space = [-self.max_accel, -self.max_accel/2, 0, self.max_accel/2, self.max_accel]
     
     def check_vertical_bounds(self, height):
@@ -82,7 +82,7 @@ class paddle():
 
     def vec_move(self, angle, speed, time_delta):
         angle = math.pi * angle
-        speed = self.max_vel * (speed+1)/2
+        speed = self.max_vel/3 * (speed+1)/2
         self.x += math.sin(angle) * speed * time_delta
         self.y -= math.cos(angle) * speed * time_delta
         self.velocity = speed
@@ -110,8 +110,9 @@ class paddle():
         x_accel = self.max_accel * choice[0]
         y_accel = self.max_accel * choice[1]
 
-        self.x_vel += x_accel * time_delta
-        self.y_vel += y_accel * time_delta
+        if math.sqrt(self.x_vel**2 + self.y_vel**2) <= self.max_vel:
+            self.x_vel += x_accel * time_delta
+            self.y_vel += y_accel * time_delta
 
         self.x += self.x_vel * time_delta
         self.y -= self.y_vel * time_delta
@@ -488,7 +489,7 @@ class AirHockeyEnvironment():
         if self.puck_trail:
             self.points = []
         
-        self.pre_point = []
+        self.pre_point = [0, 0]
         x_along_line = self.puck.x
         y_along_line = self.puck.y
         temp_speed = self.puck.speed
@@ -500,10 +501,27 @@ class AirHockeyEnvironment():
         smallest_dist = 9999.0
         reward = 0
         crossed_half = False
+        crossed_back = False
         while temp_speed >= 0.05:
             temp_speed *= self.puck.friction
             x_along_line = x_along_line + math.sin(line_angle) * temp_speed * self.dt
             y_along_line = y_along_line - math.cos(line_angle) * temp_speed * self.dt
+
+            if l_x + self.puck.radius <= self.env.width-10 and l_x - self.puck.radius >= 10 and l_y + self.puck.radius <= self.env.height and l_y - self.puck.radius >= 0:
+                if (x_along_line - self.puck.radius <= 3) and (y_along_line - self.puck.radius >= self.env.goal_y1) and (y_along_line + self.puck.radius <= self.env.goal_y2):
+                    if paddle.name == '1':
+                        reward -= self.accuracy_reward
+                    elif paddle.name == '2':
+                        reward += 1.5*self.accuracy_reward
+                    return reward, [smallest_x, smallest_y]
+
+                if (x_along_line + self.puck.radius >= self.env.width-3) and (y_along_line - self.puck.radius >= self.env.goal_y1) and (y_along_line + self.puck.radius <= self.env.goal_y2):
+                    if paddle.name == '1':
+                        reward += 1.5*self.accuracy_reward
+                    elif paddle.name == '2':
+                        reward -= self.accuracy_reward
+                    return reward, [smallest_x, smallest_y]   
+
 
             if x_along_line + self.puck.radius > self.env.width:
                 x_along_line = 2 * (self.env.width - self.puck.radius) - x_along_line
@@ -527,21 +545,7 @@ class AirHockeyEnvironment():
             distance = math.hypot(pdx, pdy)
 
             if distance <= self.puck.radius + paddle.radius:
-                tangent = math.atan2(pdy, pdx)
-                temp_angle = math.pi / 2 + tangent
-                total_mass = self.puck.mass + paddle.mass
-                
-                speed_multiplier = 2
-
-                vec_a = (line_angle, temp_speed * (self.puck.mass - paddle.mass) / total_mass)
-                vec_b = (temp_angle, speed_multiplier * paddle.velocity * paddle.mass / total_mass)
-
-                (line_angle, _) = self.add_vectors(vec_a, vec_b)
-
-                # To prevent puck and paddle from sticking.
-                offset = 0.5 * (self.puck.radius + paddle.radius - distance + 1)
-                x_along_line += math.sin(temp_angle) * offset
-                y_along_line -= math.cos(temp_angle) * offset
+                return 0, [smallest_x, smallest_y]  
 
             if paddle.name == '1':
                 dx = self.env.width - x_along_line
@@ -564,27 +568,25 @@ class AirHockeyEnvironment():
             if paddle.name == '2' and x_along_line < self.env.width/2:
                 crossed_half = True
             
-            if (x_along_line - self.puck.radius <= 3) and (y_along_line >= self.env.goal_y1) and (self.puck.y <= self.env.goal_y2) and not crossed_half:
-                if paddle.name == '1':
-                    reward -= self.accuracy_reward
-                elif paddle.name == '2':
-                    reward += 1.5*self.accuracy_reward
-                return reward, [smallest_x, smallest_y]
-
-            if (x_along_line + self.puck.radius >= self.env.width-3) and (y_along_line >= self.env.goal_y1) and (self.puck.y <= self.env.goal_y2):
-                if paddle.name == '1':
-                    reward += 1.5*self.accuracy_reward
-                elif paddle.name == '2':
-                    reward -= self.accuracy_reward
-                return reward, [smallest_x, smallest_y]    
+            if crossed_half:
+                if paddle.name == '1' and x_along_line < self.env.width/2:
+                    crossed_back = True
+                if paddle.name == '2' and x_along_line > self.env.width/2:
+                    crossed_back = True
 
             l_x = x_along_line
             l_y = y_along_line
            
-        if smallest_dist <= self.width_window:
-            reward += self.accuracy_reward
-        elif smallest_dist > self.width_window:
-            reward += self.accuracy_reward * math.exp(-self.decay_rate * (smallest_dist - self.width_window))
+            if crossed_back:
+                break
+
+        if crossed_half:
+            if smallest_dist <= self.width_window:
+                reward += self.accuracy_reward
+            elif smallest_dist > self.width_window:
+                reward += self.accuracy_reward * math.exp(-self.decay_rate * (smallest_dist - self.width_window))
+        else:
+            reward = -self.accuracy_reward
 
         return reward, [smallest_x, smallest_y] 
 
