@@ -507,6 +507,14 @@ class AirHockeyEnvironment():
             x_along_line = x_along_line + math.sin(line_angle) * temp_speed * self.dt
             y_along_line = y_along_line - math.cos(line_angle) * temp_speed * self.dt
 
+            pdx = x_along_line - paddle.x
+            pdy = y_along_line - paddle.y
+
+            distance = math.hypot(pdx, pdy)
+
+            if distance <= self.puck.radius + paddle.radius:
+                return 0, [smallest_x, smallest_y]  
+                
             if l_x + self.puck.radius <= self.env.width-10 and l_x - self.puck.radius >= 10 and l_y + self.puck.radius <= self.env.height and l_y - self.puck.radius >= 0:
                 if (x_along_line - self.puck.radius <= 3) and (y_along_line - self.puck.radius >= self.env.goal_y1) and (y_along_line + self.puck.radius <= self.env.goal_y2):
                     if paddle.name == '1':
@@ -538,14 +546,6 @@ class AirHockeyEnvironment():
             elif y_along_line - self.puck.radius < 0:
                 y_along_line = 2 * self.puck.radius - y_along_line
                 line_angle = math.pi - line_angle
-
-            pdx = x_along_line - paddle.x
-            pdy = y_along_line - paddle.y
-
-            distance = math.hypot(pdx, pdy)
-
-            if distance <= self.puck.radius + paddle.radius:
-                return 0, [smallest_x, smallest_y]  
 
             if paddle.name == '1':
                 dx = self.env.width - x_along_line
@@ -731,4 +731,8 @@ class AirHockeyEnvironment():
             else:
                 self.break_step = False
 
-        return self.get_state(-1, -1, False)
+        if self.paddle1.x <= 150 and self.puck.x > self.paddle1.p1_lim:
+            reward = (1-self.paddle1.x/150) * 3.5 + (1-abs(self.paddle1.y-self.env.height)/(self.env.height/2)) * 1.5
+        else:
+            reward = -1
+        return self.get_state(reward, -1, False)

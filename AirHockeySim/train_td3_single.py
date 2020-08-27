@@ -24,6 +24,7 @@ if __name__ == "__main__":
         agent1.load_models()
     
     epsilon = 0.01
+    epsilon2 = 0.1
     for i in range(n_games):
         done = False
         if np.random.random() < epsilon:
@@ -36,6 +37,10 @@ if __name__ == "__main__":
         score1 = 0
         score2 = 0
         while not done:
+            if np.random.random() < epsilon2:
+                agent1.warmup = 250000
+            else:
+                agent1.warmup = 0
             action1 = agent1.choose_actions(state1)
             action2 = random.randint(0, 24)
             #print(env.paddle1.x_vel, env.paddle1.y_vel, action1)
