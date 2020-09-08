@@ -19,9 +19,16 @@ if __name__ == "__main__":
                     warmup=0, n_actions=2, max_size=1000000, 
                     layer1_size=400, layer2_size=300, batch_size=100,
                     noise=0.1)
-                    
+
+    agent2 = TDAgent(alpha=5e-5, beta=5e-5, input_dims=[8], tau=0.005, max_action=1.0, 
+                    min_action=-1.0, gamma=0.99, update_actor_interval=20, 
+                    warmup=0, n_actions=2, max_size=1000000, 
+                    layer1_size=400, layer2_size=300, batch_size=100,
+                    noise=0.1)      
+
     if load_checkpoint:
         agent1.load_models()
+        agent2.load_models()
     
     epsilon = 0.01
     epsilon2 = 0.1
@@ -42,7 +49,7 @@ if __name__ == "__main__":
             else:
                 agent1.warmup = 0
             action1 = agent1.choose_actions(state1)
-            action2 = random.randint(0, 24)
+            action2 = agent1.choose_actions(state2)
             #print(env.paddle1.x_vel, env.paddle1.y_vel, action1)
             new_state1, new_state2, reward1, reward2, done = env.step(action1, action2, render=True)
             new_state1 = np.array(new_state1)
