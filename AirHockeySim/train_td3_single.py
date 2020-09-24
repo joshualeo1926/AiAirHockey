@@ -1,4 +1,4 @@
-import gym
+#import gym
 import numpy as np
 import random
 import math
@@ -30,8 +30,8 @@ if __name__ == "__main__":
         agent1.load_models()
         agent2.load_models()
     
-    epsilon = 0.01
-    epsilon2 = 0.1
+    epsilon = 0
+    epsilon2 = 0
     for i in range(n_games):
         done = False
         if np.random.random() < epsilon:
@@ -90,16 +90,16 @@ if __name__ == "__main__":
 
             agent1.save_models()
 
-            with open('.\\data.csv', 'r') as r:
-                lines = r.readlines()
-            avg_scores = [float(line.split(',')[2]) for line in lines][-200:]
-            plt.plot([j for j in range(len(avg_scores))], avg_scores, label="Avg scores")
-            plt.ylabel("Score")
-            plt.xlabel("Episode")
-            plt.legend()
-            time = datetime.now()
-            file_name = ".\\Plots\\Model_"+time.strftime("%d%m%Y")+"_"+str(i+1)+"_"+str(score1).split('.')[0]+".png"
-            plt.savefig(file_name, bbox_inches='tight')
+            #with open('.\\data.csv', 'r') as r:
+            #    lines = r.readlines()
+            #avg_scores = [float(line.split(',')[2]) for line in lines][-200:]
+            #plt.plot([j for j in range(len(avg_scores))], avg_scores, label="Avg scores")
+            #plt.ylabel("Score")
+            #plt.xlabel("Episode")
+            #plt.legend()
+            #time = datetime.now()
+            #file_name = ".\\Plots\\Model_"+time.strftime("%d%m%Y")+"_"+str(i+1)+"_"+str(score1).split('.')[0]+".png"
+            #plt.savefig(file_name, bbox_inches='tight')
             #plt.show(block=False)
             #plt.pause(5)
             #plt.close()

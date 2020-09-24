@@ -1,4 +1,4 @@
 call activate ml
-call python %cd%"\cvml.py"
+call python %cd%"\cvtext.py"
 call conda deactivate
 pause
