@@ -9,8 +9,8 @@ class puck_detect():
         self.maxWidth = 0
         self.maxWidth = 0
         self.vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        self.vid.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+        self.vid.set(cv2.CAP_PROP_FRAME_WIDTH, 1100)
+        self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 550)
         self.vid.set(cv2.CAP_PROP_FPS, 60)
         self.get_calibration_metrics()
 

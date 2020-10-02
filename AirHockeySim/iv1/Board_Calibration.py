@@ -12,12 +12,16 @@ def order_points(pts):
     rect[3] = pts[np.argmax(diff)]
 
     buff = 150
-    height_buffer = 180
-    width_buffer = 140
-    rect[0] = rect[0] - [height_buffer, width_buffer]
-    rect[1] = rect[1] + [height_buffer, -width_buffer]
-    rect[2] = rect[2] + [height_buffer, width_buffer]
-    rect[3] = rect[3] + [-height_buffer, width_buffer]
+    height_buffer = 150
+    width_buffer = 130
+    top = 0
+    right = 20
+    left = 20
+    bot = 20
+    rect[0] = rect[0] - [height_buffer+0, width_buffer-5]
+    rect[1] = rect[1] + [height_buffer+0, -width_buffer+15]
+    rect[2] = rect[2] + [height_buffer, width_buffer-10]
+    rect[3] = rect[3] + [-height_buffer, width_buffer-15]
 
     return rect
 
@@ -71,15 +75,15 @@ def filter_red(image):
 
 def main():
     vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    vid.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+    vid.set(cv2.CAP_PROP_FRAME_WIDTH, 1100)
+    vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 550)
     frame_times = []
 
     while(True):
         start = time.time()
 
         ret, frame = vid.read()
-
+        print(frame)
         output_img_r, output_hsv_r = filter_red(frame)
 
         r_blur = cv2.blur(output_img_r,(3,3))
@@ -89,7 +93,7 @@ def main():
         r_gry_img[np.where(r_gry_img>40)] = 255
 
         red_circles = cv2.HoughCircles(r_gry_img,cv2.HOUGH_GRADIENT,1,150,param1=200,\
-                                        param2=10,minRadius=85,maxRadius=90)
+                                        param2=10,minRadius=60,maxRadius=75)
                
         r_pts = np.array([])
         if red_circles is not None:

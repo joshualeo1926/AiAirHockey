@@ -32,7 +32,7 @@ class puck_stats():
     def update(self, pos, dt):
         #self.current_x = (pos[0] + pos[0] + 0.6 * self.x_vel*dt)/2
         #self.current_x = (pos[1] + pos[1] + 0.6 * self.x_vel*dt)/2
-        
+
         if (((pos[0]-self.last_x)/dt)**2 + ((pos[1]-self.last_y)/dt)**2)**0.5 < self.threshold_vel and False:
             self.current_x = self.last_x
             self.current_y = self.last_y
@@ -45,7 +45,7 @@ class puck_stats():
         self.last_y = self.current_y
         self.last_x_vel = self.x_vel
         self.last_y_vel = self.y_vel
-        return int(self.current_x), int(self.x_vel), int(self.current_y), int(self.y_vel)
+        return self.current_x, self.x_vel, self.current_y, self.y_vel
     
 class paddle_stats():
     def __init__(self):
@@ -101,15 +101,10 @@ class paddle_stats():
         self.y_vel = (self.last_y - self.y)/time_delta
         self.velocity = math.sqrt(self.x_vel**2 + self.y_vel**2)
 
-        differential = 20
-        if self.velocity >= 200:
-            self.x = choice[0] * differential
-            self.y = choice[1] * differential
-
         self.last_x = self.x
         self.last_y = self.y
 
-        return int(self.x), int(self.x_vel), int(self.y), int(self.y_vel)
+        return self.x, self.x_vel, self.y, self.y_vel
 
 if __name__ == "__main__":
     debug = True
@@ -122,7 +117,7 @@ if __name__ == "__main__":
                     min_action=-1.0, gamma=0.99, update_actor_interval=20, 
                     warmup=0, n_actions=2, max_size=1000000, 
                     layer1_size=400, layer2_size=300, batch_size=100,
-                    noise=0.1)
+                    noise=0) #noise=0.1
 
     # LOAD TRAINED STATE DICT
     agent1.load_models()
@@ -134,8 +129,9 @@ if __name__ == "__main__":
     puck_stat = puck_stats()
     paddle_stat = paddle_stats()
 
+    point = detector.get_puck_location()
     # STATE VECTOR
-    state = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    state = np.array([0.0, 0.0, 275.0, 0.0, point[0], 0.0, point[1], 0.0])
 
     last_time = time.time()
     while running:
@@ -155,7 +151,6 @@ if __name__ == "__main__":
 
         # CHOSE AN ACTION
         action = agent1.choose_actions(state)
-
         # UPDATE PADDLE LOCATION
         paddle_x, paddle_x_vel, paddle_y, paddle_y_vel = paddle_stat.update(action, dt)
 
@@ -165,12 +160,12 @@ if __name__ == "__main__":
         else:
             val1 = paddle_y+-20
         
-        if paddle_x-0 < 0:
-            val2 = 0
+        if paddle_x-0 < 30:
+            val2 = 30
         else:
             val2 =  paddle_x-0
 
-        arduino_link.send(val1, val2)
+        arduino_link.send(int(val1), int(val2))
 
         # UPDATE STATE VECTOR
         state[0:4] = [paddle_x, paddle_x_vel, paddle_y, paddle_y_vel]
@@ -181,7 +176,7 @@ if __name__ == "__main__":
         # DEBUG
         #os.system('cls||clear')
         if debug == True:
-            print("sending: x: " + str(val1) + " y: " + str(val2))
+            print("sending: x: " + str(int(val1)) + " y: " + str(int(val2)))
             #print("==================\nPUCK VEL:\n  x: " + str(int(puck_x_vel)) + " y: " + str(int(puck_y_vel)) + " \nPOS:\n  x: " + str(puck_x) + " y: " + str(puck_y) + "\n")
             #print("\nPADDLE VEL:\n  x: " + str(int(paddle_x_vel)) + " y: " + str(int(paddle_y_vel)) + " \nPOS:\n  x: " + str(paddle_x) + " y: " + str(paddle_y) + "\n==================")
             frame = detector.get_p_frame()
