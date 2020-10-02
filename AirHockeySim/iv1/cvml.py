@@ -61,32 +61,28 @@ class paddle_stats():
         self.y_accel = 0
         self.velocity = 0
 
-        self.max_vel = 500#450#450#125
-        self.max_accel = 6000#1000#1000#500#150#125#100
+        self.max_vel = 500#500#450#450#125
+        self.max_accel = 6000#6000#1000#1000#500#150#125#100
 
         # LIMITS
         self.x_max = 360
         self.x_min = 0
-        self.y_max = 560
+        self.y_max = 520
         self.y_min = 0
 
     def update(self, choice, time_delta):
         x_accel = self.max_accel * choice[0]
         y_accel = self.max_accel * choice[1]
 
-        y_a = y_accel/self.max_accel
-        x_a = x_accel/self.max_accel
-
         self.x_vel += x_accel * time_delta
         self.y_vel += y_accel * time_delta
         if math.sqrt(self.x_vel**2 + self.y_vel**2) > self.max_vel:
-            self.x_vel = x_a * self.max_vel
-            self.y_vel = y_a * self.max_vel
+            self.x_vel = choice[0] * self.max_vel
+            self.y_vel = choice[1] * self.max_vel
 
         mult = 1 # 1.1
         self.x += mult * self.x_vel * time_delta
         self.y -= mult * self.y_vel * time_delta
-
 
         if self.x > self.x_max:
             self.x = self.x_max
@@ -105,12 +101,19 @@ class paddle_stats():
         self.y_vel = (self.last_y - self.y)/time_delta
         self.velocity = math.sqrt(self.x_vel**2 + self.y_vel**2)
 
+        differential = 20
+        if self.velocity >= 200:
+            self.x = choice[0] * differential
+            self.y = choice[1] * differential
+
         self.last_x = self.x
         self.last_y = self.y
 
         return int(self.x), int(self.x_vel), int(self.y), int(self.y_vel)
 
 if __name__ == "__main__":
+    debug = True
+
     # CONNECT TO ARDUINO SERIAL
     arduino_link = serial_connect()
 
@@ -125,7 +128,7 @@ if __name__ == "__main__":
     agent1.load_models()
 
     # INITALISE COMPUTER VISION DETECTOR
-    detector = puck_detect()
+    detector = puck_detect(debug)
 
     # INIALISE PUCK AND PADDLE LOGGERS
     puck_stat = puck_stats()
@@ -135,35 +138,10 @@ if __name__ == "__main__":
     state = np.array([0, 0, 0, 0, 0, 0, 0, 0])
 
     last_time = time.time()
-
-    peak_filter = real_time_peak_detection(array=[], lag=30, threshold=0.05, influence=0.85)
-    peak_filter2 = real_time_peak_detection(array=[], lag=30, threshold=0.05, influence=0.85)
-    i = 0
-    fig = plt.figure()
-    p1 = fig.add_subplot(2,2,1)
-    p2 = fig.add_subplot(2,2,2)
-    rets = []
-    iis = []
-    oris = []
-
     while running:
         
         # GET PUCK LOCATION
         point = detector.get_puck_location()
-
-        ret = peak_filter.thresholding_algo(point[0])
-        ret2 = peak_filter2.thresholding_algo(point[1])
-
-        point = [ret, ret2]
-        if i>30:
-            oris.append(point[0])
-            rets.append(ret)
-            iis.append(i)
-            p1.plot(iis, rets, 'g-')
-            p2.plot(iis, oris, 'r-')
-            #plt.show()
-            plt.pause(0.05)
-        #i += 1
 
         # GET TIME DIFFERENCE
         current_time = time.time()
@@ -182,15 +160,15 @@ if __name__ == "__main__":
         paddle_x, paddle_x_vel, paddle_y, paddle_y_vel = paddle_stat.update(action, dt)
 
         # EXECUTE ACTION
-        if paddle_y+10 > 560:
-            val1 = 560
+        if paddle_y+-20 > 520:
+            val1 = 520
         else:
-            val1 = paddle_y+10
+            val1 = paddle_y+-20
         
-        if paddle_x-10 < 0:
+        if paddle_x-0 < 0:
             val2 = 0
         else:
-            val2 =  paddle_x-10
+            val2 =  paddle_x-0
 
         arduino_link.send(val1, val2)
 
@@ -202,14 +180,18 @@ if __name__ == "__main__":
 
         # DEBUG
         #os.system('cls||clear')
-        print("sending: x: " + str(val1) + " y: " + str(val2))
-        #print("==================\nPUCK VEL:\n  x: " + str(int(puck_x_vel)) + " y: " + str(int(puck_y_vel)) + " \nPOS:\n  x: " + str(puck_x) + " y: " + str(puck_y) + "\n")
-        #print("\nPADDLE VEL:\n  x: " + str(int(paddle_x_vel)) + " y: " + str(int(paddle_y_vel)) + " \nPOS:\n  x: " + str(paddle_x) + " y: " + str(paddle_y) + "\n==================")
-        frame = detector.get_p_frame()
-        cv2.circle(frame, (int(paddle_x), int(paddle_y)), (int(20)), (0, 255, 255), -1)
-        cv2.circle(frame, (int(puck_x), int(puck_y)), (int(30)), (255, 0, 0), 5)
+        if debug == True:
+            print("sending: x: " + str(val1) + " y: " + str(val2))
+            #print("==================\nPUCK VEL:\n  x: " + str(int(puck_x_vel)) + " y: " + str(int(puck_y_vel)) + " \nPOS:\n  x: " + str(puck_x) + " y: " + str(puck_y) + "\n")
+            #print("\nPADDLE VEL:\n  x: " + str(int(paddle_x_vel)) + " y: " + str(int(paddle_y_vel)) + " \nPOS:\n  x: " + str(paddle_x) + " y: " + str(paddle_y) + "\n==================")
+            frame = detector.get_p_frame()
+            cv2.circle(frame, (int(paddle_x), int(paddle_y)), (int(20)), (0, 255, 255), -1)
+            cv2.circle(frame, (int(puck_x), int(puck_y)), (int(30)), (255, 0, 0), 5)
 
-        cv2.putText(frame, "x: % 3d" % int(abs(paddle_x_vel)) + " y: % 3d" % int(abs(paddle_y_vel)), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2, lineType=cv2.LINE_AA)
-        cv2.putText(frame, "x: % 3d" % int(abs(puck_x_vel)) + " y: % 3d" % int(abs(puck_y_vel)), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2, lineType=cv2.LINE_AA)
-        cv2.imshow('frame', frame)
-        cv2.waitKey(1)
+            cv2.putText(frame, "x: % 3d" % int(abs(paddle_x)) + " y: % 3d" % int(abs(paddle_y)), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2, lineType=cv2.LINE_AA)
+            cv2.putText(frame, "x: % 3d" % int(abs(puck_x)) + " y: % 3d" % int(abs(puck_y)), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2, lineType=cv2.LINE_AA)
+            cv2.imshow('frame', frame)
+            cv2.waitKey(1)
+        else:
+            #print(1/dt)
+            pass

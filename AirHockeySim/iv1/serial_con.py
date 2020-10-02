@@ -2,7 +2,7 @@ from serial import Serial
 import time
 
 class serial_connect():
-    def __init__(self, com='com3', baud=115200):
+    def __init__(self, com='com4', baud=115200):
         self.connection = Serial(com, baud)
 
     def send(self, x, y):

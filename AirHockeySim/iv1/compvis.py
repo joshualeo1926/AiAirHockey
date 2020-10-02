@@ -4,7 +4,7 @@ import time
 import imutils
 
 class puck_detect():
-    def __init__(self):
+    def __init__(self, debug):
         self.transformation_matrix = None
         self.maxWidth = 0
         self.maxWidth = 0
@@ -35,7 +35,7 @@ class puck_detect():
         self.last_x = None
         self.last_y = None
         # DEBUG
-        self.debug = True
+        self.debug = debug
         if self.debug:
             self.o_frame = None
             self.w_frame = None

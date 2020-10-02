@@ -5,6 +5,8 @@ char receivedChars[numChars];
 int xval = -10;
 int yval = 260;
 boolean newData = false;
+float home_ang_1;
+float home_ang_2;
 
 class Arm
 {
@@ -74,6 +76,11 @@ class Arm
         if(joint_1_angle > joint_limit_max){joint_1_angle = -360 + joint_1_angle;}
         if(joint_2_angle > joint_limit_max){joint_2_angle = -360 + joint_2_angle;}
       }
+      else
+      {
+        joint_1_angle = home_ang_1;
+        joint_2_angle = home_ang_2;
+      }
     }
 
     float joint_1_rad_to_pwm(float rad)
@@ -136,8 +143,6 @@ void recvWithStartEndMarkers() {
 
 void showNewData() {
     if (newData == true) {
-        //Serial.print("This just in ... ");
-        //Serial.println(receivedChars);
         xval = -260 + String(receivedChars[0]).toInt()*100 + String(receivedChars[1]).toInt()*10 + String(receivedChars[2]).toInt();
         yval = String(receivedChars[3]).toInt()*100 + String(receivedChars[4]).toInt()*10 + String(receivedChars[5]).toInt();
         newData = false;
@@ -147,12 +152,14 @@ void showNewData() {
 Arm two_dof_arm;
 
 void setup() {
-  two_dof_arm.joint_1.attach(9);
-  two_dof_arm.joint_2.attach(10);
+  two_dof_arm.joint_1.attach(0); //9
+  two_dof_arm.joint_2.attach(1); //10
   Serial.begin(115200);
   two_dof_arm.ikine(200, 300);
   two_dof_arm.joint_1.write(two_dof_arm.joint_1_rad_to_pwm(two_dof_arm.joint_1_angle));
   two_dof_arm.joint_2.write(two_dof_arm.joint_2_rad_to_pwm(two_dof_arm.joint_2_angle));
+  home_ang_1 = two_dof_arm.joint_1_angle;
+  home_ang_2 = two_dof_arm.joint_2_angle;
   //delay(5000);  
 }
 
